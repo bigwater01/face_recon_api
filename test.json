@@ -1,0 +1,18 @@
+{
+	"options": {
+		"option-files": ["D:\\tmp_outputs\\d2c_netrul\\options_single.txt"],
+		"output-dir": "D:\\tmp_outputs\\d2c_netrul",
+		"output-basename": "output"
+	},
+	"data": {
+		"load-mode": ["folder"],
+		"source": "D:\\tmp_outputs\\d2c_netrul\\sources\\mean.ply",
+		"source-free-faces": "D:\\tmp_outputs\\d2c_netrul\\sources\\ff_source",
+		"source-features": "D:\\tmp_outputs\\d2c_netrul\\sources\\features.txt",
+		"target": "D:\\FaceData\\RGBD\\Dalian\\20181123\\xyz1\\OBJ",
+		"target-free-faces": "D:\\FaceData\\RGBD\\Dalian\\20181123\\xyz1\\ff_target",
+		"target-features-3d": "D:\\FaceData\\RGBD\\Dalian\\20181123\\xyz1\\Landmarks\\3d_landmarks",
+		"target-features-2d": "D:\\FaceData\\RGBD\\Dalian\\20181123\\xyz1\\Landmarks\\2d_landmarks",
+		"calib-matrix": "D:\\FaceData\\RGBD\\Dalian\\20181123\\calib_matrix.txt"
+	}
+}
