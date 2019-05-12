@@ -19,7 +19,7 @@ class NICPInvariants:
 
     def check_valid(self):
         c0 = osp.isfile(self.source_free_faces)
-        c1 = osp.isfile(self.source_landmarks)
+        c1 = osp.isfile(self.source_features)
         c2 = osp.isfile(self.target_free_faces)
         self.is_valid = c0 and c1 and c2
 
@@ -28,8 +28,8 @@ class ReconElement:
     def __init__(self):
         self.base_name = ""
         self.root_path = ""
-        self.nicp_execute = ""
-        self.fd_execute = ""
+        # self.nicp_execute = ""
+        # self.fd_execute = ""
         self.map_file = ""
 
         self.has_raw = False
@@ -41,7 +41,7 @@ class ReconElement:
         self.has_mfm_model = False
 
     def run_face_recon(self, face_recon_exe, map_file, config_file):
-        self.check_raw()
+        self.check_status()
         if self.has_raw:
             subprocess.call([face_recon_exe, config_file, self.root_path, map_file], shell=False)
             self.has_obj = osp.isfile(osp.join(self.root_path, OBJ_folder, self.base_name + OBJ_suffix))
@@ -143,7 +143,7 @@ class ReconElement:
 
         subprocess.call(command, shell=False)
 
-    def check_raw(self):
+    def check_status(self):
         color_path = osp.join(self.root_path, RAW_COLOR_folder)
         gray_path = osp.join(self.root_path, RAW_GRAY_folder)
         base_id = int(self.base_name)
@@ -167,8 +167,16 @@ class ReconElement:
             g4 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 1) + RAW_GRAY_suffix))
             g5 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 2) + RAW_GRAY_suffix))
 
-        if c0 and c1 and g0 and g1 and g2 and g3 and g4 and g5:
-            self.has_raw = True
+        self.has_raw = c0 and c1 and g0 and g1 and g2 and g3 and g4 and g5
+
+        self.has_obj = osp.isfile(osp.join(self.root_path, OBJ_folder, self.base_name + OBJ_suffix))
+        self.has_rgbd = osp.isfile(osp.join(self.root_path, RGBD_folder, self.base_name + RGBD_FILE_suffix))
+        self.has_landmarks = osp.isfile(osp.join(self.root_path, LANDMARKS_folder, self.base_name + RGBD_FILE_suffix))
+        self.has_landmarks_2d = osp.isfile(osp.join(self.root_path, LANDMARKS_folder,
+                                                    self.base_name + LANDMARKS_2D_suffix))
+        self.has_landmarks_3d = osp.isfile(osp.join(self.root_path, LANDMARKS_folder,
+                                                    self.base_name + LANDMARKS_3D_suffix))
+        self.has_mfm_model = osp.isfile(osp.join(self.root_path, OUTPUT_folder, self.base_name + MFM_MESH_suffix))
 
 
 def bilinear_smoothing(matlab_engine, param1, param2):
