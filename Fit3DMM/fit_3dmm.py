@@ -4,17 +4,20 @@ import numpy as np
 import os.path as osp
 import time
 import dlib
-from utils import crop_by_lm, crop_by_face_det
+from Fit3DMM.utils import crop_by_lm, crop_by_face_det
 import logging
 
-predictor_path = 'shape_predictor_68_face_landmarks.dat'
-model = '3dmm_cnn_resnet_101.caffemodel'
-config = 'deploy_network.prototxt'
+predictor_path = './Fit3DMM/shape_predictor_68_face_landmarks.dat'
+model = './Fit3DMM/3dmm_cnn_resnet_101.caffemodel'
+config = './Fit3DMM/deploy_network.prototxt'
 trg_size = 224
 
 net = cv2.dnn.readNet(model, config)
 net.setInputsNames('data')
-mean = np.load('mean.npy')
+mean = np.load('./Fit3DMM/mean.npy')
+
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor(predictor_path)
 
 
 class NoInputFileError(Exception):
@@ -22,6 +25,10 @@ class NoInputFileError(Exception):
 
 
 class NoDetectorError(Exception):
+    pass
+
+
+class NoFaceDetectedError(Exception):
     pass
 
 
@@ -55,17 +62,34 @@ def crop_image(img, use_landmark=True, detector=None, predictor=None):
     return img, face, landmarks
 
 
-def generate_3dmm_params(input_file, output_file, detector=None, predictor=None):
+def generate_3dmm_params(input_file, output_file, rotation=0):
+    """
+    :param input_file: image with human face
+    :param output_file: bmf model params for the input human face
+    :param rotation: 0 for no rotation, >0 for left direction, <0 for right direction
+    :return: None
+    """
     if not osp.isfile(input_file):
         raise NoInputFileError
 
     img = cv2.imread(input_file)
+    if rotation > 0:
+        img = cv2.transpose(img)
+        img = cv2.flip(img, 1)
+    elif rotation < 0:
+        img = cv2.transpose(img)
+        img = cv2.flip(img, 0)
+
     if detector is None and (img.shape != (trg_size, trg_size, 3)).any():
         raise NoDetectorError
 
     use_landmark = (predictor is not None)
     if detector is not None:
         img, _, _ = crop_image(img, use_landmark=use_landmark, detector=detector, predictor=predictor)
+
+    if img is None:
+        raise NoFaceDetectedError
+
     img2 = img.astype(np.float32) - mean
     net.setInput(cv2.dnn.blobFromImage(img2))
     # start_time = time.time()

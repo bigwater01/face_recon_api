@@ -84,7 +84,7 @@ class ReconElement:
             os.mkdir(output_path)
         bfm_params_file = osp.join(output_path, self.base_name + BFM_PARAMS_suffix)
         try:
-            generate_3dmm_params(rgbd_file, output_path)
+            generate_3dmm_params(rgbd_file, osp.join(output_path, self.base_name + BFM_PARAMS_suffix), rotation=1)
         except NoInputFileError:
             logging.warning("The input file for generating 3dmm params does not exist: %s." % rgbd_file)
             return
@@ -92,9 +92,9 @@ class ReconElement:
             logging.warning("The input image for generating 3dmm params needs crop but no detector found: %s."
                             % rgbd_file)
             return
-        except Exception as e:
-            logging.warning("Exception %s was caught while running generate_3dmm_params at path %s."
-                            % (type(e).__name__, self.root_path))
+        except NoFaceDetectedError:
+            logging.warning("Found no face on: %s."
+                            % rgbd_file)
             return
 
         mfm_model_file = osp.join(output_path, self.base_name + MFM_MESH_suffix)
@@ -106,10 +106,10 @@ class ReconElement:
                           "error type is %s" % (self.root_path, type(e).__name__))
 
     def run_nicp(self, nicp_exe, option_file, invariants, calib_matrix, source_file=None):
-        if not osp.isfile(nicp_exe) or not osp.isfile(option_file) or not osp.isfile(calib_matrix):
+        if not (osp.isfile(nicp_exe) and osp.isfile(option_file) and osp.isfile(calib_matrix)):
             logging.warning("Invalid NICP exe or config file or calib matrix file, path is: %s." % self.root_path)
             return
-        if not invariants.is_valid():
+        if not invariants.is_valid:
             logging.warning("NICP invariants are invalid, path is: %s." % self.root_path)
             return
 
@@ -124,22 +124,30 @@ class ReconElement:
             return
 
         command = [nicp_exe]
-        command.extend(["--option", option_file])
-        command.extend(["-s", source_file])
-        command.extend(["--source-free-faces", invariants.source_free_faces])
-        command.extend(["--source-features", invariants.source_features])
-        command.extend(["-t", osp.join(self.root_path, OBJ_folder, self.base_name + OBJ_suffix)])
-        command.extend(["--target-free-faces", invariants.target_free_faces])
+        command.extend(["--option",
+                        option_file])
+        command.extend(["-s",
+                        source_file])
+        command.extend(["--source-free-faces",
+                        invariants.source_free_faces])
+        command.extend(["--source-features",
+                        invariants.source_features])
+        command.extend(["-t",
+                        osp.join(self.root_path, OBJ_folder, self.base_name + OBJ_suffix)])
+        command.extend(["--target-free-faces",
+                        invariants.target_free_faces])
         command.extend(["--target-features",
                         osp.join(self.root_path, LANDMARKS_folder, self.base_name + LANDMARKS_3D_suffix)])
         command.extend(["--target-features-2d",
                         osp.join(self.root_path, LANDMARKS_folder, self.base_name + LANDMARKS_2D_suffix)])
-        command.extend(["--calib-matrix", calib_matrix])
-        command.extend(["--output", osp.join(self.root_path, OUTPUT_folder)])
-        command.extend(["--basename", self.base_name + NICP_MESH_suffix])
+        command.extend(["--calib-matrix",
+                        calib_matrix])
+        command.extend(["--output",
+                        osp.join(self.root_path, OUTPUT_folder, self.base_name + NICP_MESH_suffix)])
+        # command.extend(["--basename", self.base_name + NICP_MESH_suffix])
 
         logging.info("Recording nicp commands")
-        logging.info(command)
+        logging.info(" ".join(command))
 
         subprocess.call(command, shell=False)
 
@@ -149,29 +157,29 @@ class ReconElement:
         base_id = int(self.base_name)
 
         if base_id % 2 == 0:
-            c0 = osp.isfile(osp.join(color_path, str(base_id) + RAW_COLOR_suffix))
-            c1 = osp.isfile(osp.join(color_path, str(base_id + 1) + RAW_COLOR_suffix))
-            g0 = osp.isfile(osp.join(gray_path, str(base_id * 3) + RAW_GRAY_suffix))
-            g1 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 1) + RAW_GRAY_suffix))
-            g2 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 2) + RAW_GRAY_suffix))
-            g3 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 3) + RAW_GRAY_suffix))
-            g4 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 4) + RAW_GRAY_suffix))
-            g5 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 5) + RAW_GRAY_suffix))
+            c0 = osp.isfile(osp.join(color_path, str(base_id).zfill(4) + RAW_COLOR_suffix))
+            c1 = osp.isfile(osp.join(color_path, str(base_id + 1).zfill(4) + RAW_COLOR_suffix))
+            g0 = osp.isfile(osp.join(gray_path, str(base_id * 3).zfill(4) + RAW_GRAY_suffix))
+            g1 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 1).zfill(4) + RAW_GRAY_suffix))
+            g2 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 2).zfill(4) + RAW_GRAY_suffix))
+            g3 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 3).zfill(4) + RAW_GRAY_suffix))
+            g4 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 4).zfill(4) + RAW_GRAY_suffix))
+            g5 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 5).zfill(4) + RAW_GRAY_suffix))
         else:
-            c0 = osp.isfile(osp.join(color_path, str(base_id - 1) + RAW_COLOR_suffix))
-            c1 = osp.isfile(osp.join(color_path, str(base_id) + RAW_COLOR_suffix))
-            g0 = osp.isfile(osp.join(gray_path, str(base_id * 3 - 3) + RAW_GRAY_suffix))
-            g1 = osp.isfile(osp.join(gray_path, str(base_id * 3 - 2) + RAW_GRAY_suffix))
-            g2 = osp.isfile(osp.join(gray_path, str(base_id * 3 - 1) + RAW_GRAY_suffix))
-            g3 = osp.isfile(osp.join(gray_path, str(base_id * 3) + RAW_GRAY_suffix))
-            g4 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 1) + RAW_GRAY_suffix))
-            g5 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 2) + RAW_GRAY_suffix))
+            c0 = osp.isfile(osp.join(color_path, str(base_id - 1).zfill(4) + RAW_COLOR_suffix))
+            c1 = osp.isfile(osp.join(color_path, str(base_id).zfill(4) + RAW_COLOR_suffix))
+            g0 = osp.isfile(osp.join(gray_path, str(base_id * 3 - 3).zfill(4) + RAW_GRAY_suffix))
+            g1 = osp.isfile(osp.join(gray_path, str(base_id * 3 - 2).zfill(4) + RAW_GRAY_suffix))
+            g2 = osp.isfile(osp.join(gray_path, str(base_id * 3 - 1).zfill(4) + RAW_GRAY_suffix))
+            g3 = osp.isfile(osp.join(gray_path, str(base_id * 3).zfill(4) + RAW_GRAY_suffix))
+            g4 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 1).zfill(4) + RAW_GRAY_suffix))
+            g5 = osp.isfile(osp.join(gray_path, str(base_id * 3 + 2).zfill(4) + RAW_GRAY_suffix))
 
         self.has_raw = c0 and c1 and g0 and g1 and g2 and g3 and g4 and g5
 
         self.has_obj = osp.isfile(osp.join(self.root_path, OBJ_folder, self.base_name + OBJ_suffix))
         self.has_rgbd = osp.isfile(osp.join(self.root_path, RGBD_folder, self.base_name + RGBD_FILE_suffix))
-        self.has_landmarks = osp.isfile(osp.join(self.root_path, LANDMARKS_folder, self.base_name + RGBD_FILE_suffix))
+        self.has_landmarks = osp.isfile(osp.join(self.root_path, LANDMARKS_folder, self.base_name + LANDMARKS_RAW_suffix))
         self.has_landmarks_2d = osp.isfile(osp.join(self.root_path, LANDMARKS_folder,
                                                     self.base_name + LANDMARKS_2D_suffix))
         self.has_landmarks_3d = osp.isfile(osp.join(self.root_path, LANDMARKS_folder,
@@ -181,3 +189,7 @@ class ReconElement:
 
 def bilinear_smoothing(matlab_engine, param1, param2):
     pass
+
+
+def add_quotes(string):
+    return f'"{string}"'

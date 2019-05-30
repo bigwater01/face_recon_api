@@ -2,7 +2,7 @@ import os.path as osp
 import os
 import subprocess
 
-MESHLAB_SERVER_CMD = r"C:\Program Files\VCG\MeshLab\meshlab.exe"
+MESHLAB_SERVER_CMD = r"C:\Program Files\VCG\MeshLab\meshlabserver.exe"
 
 
 def list_all_files(path, use_abs_path=True, contains="", ext=""):
@@ -27,5 +27,9 @@ def meshlab_obj2ply(input_path, output_path):
 
 
 def meshlab_run_script(input_path, output_path, script_file):
-    subprocess.call([MESHLAB_SERVER_CMD, "-i", input_path, "-o", output_path, "-m", "vc", "vn", "vt", "fc", "wt",
-                     "-s", script_file])
+    command = [MESHLAB_SERVER_CMD,
+               "-i", input_path,
+               "-o", output_path,
+               "-m", "vc", "vn", "vt", "fc", "wt",
+               "-s", script_file]
+    subprocess.call(command, shell=False)
